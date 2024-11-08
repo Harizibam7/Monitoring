@@ -1,18 +1,13 @@
 import express from "express";
-
+import client from 'prom-client';
 const app = express();
-
-function middleware(req:any, res:any, next:any){
-    const startTime = Date.now();
-    next();
-    const endTime = Date.now();
-    console.log(`Request took ${endTime - startTime} ms`);
-
-}
-
+import { monitoringMiddleware } from "./metrics/metrics";
 
 app.use(express.json());
-app.use(middleware);
+// app.use(requestCountMiddleware);
+// app.use(activeUserMiddleware);
+// app.use(histogramRequest);
+app.use(monitoringMiddleware);
 
 app.get('/user', (req, res) => {
     res.send({
@@ -27,6 +22,12 @@ app.post("/user",(req, res) => {
         ...user,
         id:1,
     });
+});
+
+app.get("/metrics", async (req, res) => {
+    const metrics = await client.register.metrics();
+    res.set('Content-Type',client.register.contentType);    
+    res.end(metrics);
 });
 
 
